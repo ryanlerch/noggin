@@ -5,6 +5,7 @@ import requests
 from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 from python_freeipa.exceptions import BadRequest, FreeIPAError
+from srvlookup import SRVQueryFailure
 
 from noggin.app import ipa_admin
 from noggin.security.ipa import (
@@ -68,6 +69,12 @@ def test_choose_server_not_in_lookup(client, srvlookup_mock):
 def test_choose_server_no_server(client, srvlookup_mock):
     srvlookup_mock.lookup.side_effect = None
     srvlookup_mock.lookup.return_value = []
+    with pytest.raises(NoIPAServer):
+        choose_server(current_app)
+
+
+def test_choose_server_query_failure(client, srvlookup_mock):
+    srvlookup_mock.lookup.side_effect = SRVQueryFailure("failure")
     with pytest.raises(NoIPAServer):
         choose_server(current_app)
 
